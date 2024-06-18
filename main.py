@@ -166,7 +166,10 @@ def get_channel_admins(table_start):
 
         table_cur = table_cur + 1
         if table_cur % 100 == 0:
-            table_start = table_cur
+            print(f'Stopped at {table_cur}. Запомните это значение - '
+                  f'при перезапуске программы необходимо будет вписать его в переменную "table_start"')
+            write_to_result_csv(channel_info_list)
+            channel_info_list = []
             print('SLEEPING FOR 4 HOURS FOR COOLDOWN')
             time.sleep(3600 * 4)  # program stops for 4 hours for cooldown
 
