@@ -22,6 +22,8 @@ excel_file = 'output_real.xlsx'  # Update this path
 channels_links = pd.read_excel(excel_file)
 channels_links = channels_links['url']
 
+table_start = 0
+table_cur = table_start
 
 def get_free_proxies():
     proxies = []
@@ -93,11 +95,14 @@ def get_random_headers():
     }
     return headers
 
+
 def random_delay():
     time.sleep(random.uniform(3, 10))  # Increased delay to reduce load on the server
 
+
 def get_random_proxy():
     return random.choice(proxies)
+
 
 def parse_telegram_channel(url):
     session = requests.Session()
@@ -143,10 +148,11 @@ async def get_entity_with_retry(client, username_or_id):
                 print(f"Failed to process {username_or_id}: {e}")
                 return None
 
-def get_channel_admins():
+def get_channel_admins(table_start):
+    table_cur = table_start
     channel_info_list = []
     request_count = 0
-    for link in channels_links:
+    for link in channels_links[table_start:]:
         if request_count >= 20:
             print("Rate limit reached, waiting for 2 seconds...")
             time.sleep(2)
@@ -177,6 +183,11 @@ def get_channel_admins():
                 'Usernames': 'Error 2'
             })
 
+        table_cur = table_cur + 1
+        if table_cur % 100 == 0:
+            table_start = table_cur
+            time.sleep(3600 * 4)  # program stops for 4 hours for cooldown
+
         time.sleep(0.1)
 
     # Create a DataFrame and export to Excel
@@ -184,6 +195,7 @@ def get_channel_admins():
     df.to_excel('channel_contacts.xlsx', index=False)
     print('Completed')
 
-get_channel_admins()
+
+get_channel_admins(table_start=table_start)
 
 print("Completed. Check the 'channel_contacts.xlsx' file.")
