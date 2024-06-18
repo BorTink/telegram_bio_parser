@@ -1,11 +1,12 @@
 import pandas as pd
 from telethon import TelegramClient, functions, types
 import re
-import asyncio
 import requests
 from bs4 import BeautifulSoup
 import time
 import random
+import csv
+import os
 
 # Regular expression to extract all usernames from the bio
 username_regex = r'@\w+'
@@ -24,6 +25,22 @@ channels_links = channels_links['url']
 
 table_start = 0
 table_cur = table_start
+
+
+file_path = 'result.csv'
+file_exists = os.path.isfile(file_path)
+
+
+def write_to_result_csv(data_to_append):
+    with open(file_path, 'a', newline='') as csvfile:
+        fieldnames = ['Channel Link', 'Channel Name', 'Usernames']
+        csvwriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        if not file_exists:
+            csvwriter.writeheader()
+
+        for row in data_to_append:
+            csvwriter.writerow(row)
 
 
 def replace_html_tags_with_spaces(html_text):
@@ -83,22 +100,22 @@ def parse_telegram_channel(url):
         return f'Failed to retrieve the page. Status code: {response.status_code}', 'None'
 
 
-async def get_entity_with_retry(client, username_or_id):
+def get_entity_with_retry(client, username_or_id):
     while True:
         try:
-            entity = await client.get_entity(username_or_id)
+            entity = client.get_entity(username_or_id)
             return entity
         except Exception as e:
             if 'A wait of' in str(e):
                 wait_time = int(re.search(r'(\d+) seconds', str(e)).group(1))
                 print(f"Rate limit exceeded. Waiting for {wait_time} seconds...")
-                await asyncio.sleep(wait_time + 1)  # Wait for the required time plus a buffer
+                time.sleep(wait_time + 1)  # Wait for the required time plus a buffer
             else:
                 print(f"Failed to process {username_or_id}: {e}")
                 return None
 
 
-async def get_channel_admins(table_start):
+def get_channel_admins(table_start):
     table_cur = table_start
     channel_info_list = []
     request_count = 0
@@ -107,7 +124,7 @@ async def get_channel_admins(table_start):
             print(channel_info_list[-1])
         if request_count >= 20:
             print("Rate limit reached, waiting for 2 seconds...")
-            await asyncio.sleep(2)
+            time.sleep(2)
             request_count = 0
 
         try:
@@ -122,15 +139,15 @@ async def get_channel_admins(table_start):
             # for username in usernames:
             #     if request_count >= 20:
             #         print("Rate limit reached, waiting for 2 seconds...")
-            #         await asyncio.sleep(2)
+            #         time.sleep(2)
             #         request_count = 0
             #
-            #     user_entity = await get_entity_with_retry(client, username)
+            #     user_entity = get_entity_with_retry(client, username)
             #     request_count += 1
             #
             #     if user_entity and isinstance(user_entity, types.User) and not user_entity.bot:
             #         individual_usernames.append(username)
-            #     await asyncio.sleep(0.1)  # Small delay to avoid hitting rate limits
+            #     time.sleep(0.1)  # Small delay to avoid hitting rate limits
 
             # Append the information to our list
             channel_info_list.append({
@@ -155,15 +172,14 @@ async def get_channel_admins(table_start):
 
         time.sleep(0.1)
 
-        await asyncio.sleep(0.1)  # Small delay to avoid hitting rate limits
+        time.sleep(0.1)  # Small delay to avoid hitting rate limits
 
     # Create a DataFrame and export to Excel
     df = pd.DataFrame(channel_info_list)
     df.to_excel('channel_contacts.xlsx', index=False)
     print('Completed')
 
-# Execute the async function
-with client:
-    client.loop.run_until_complete(get_channel_admins(table_start=table_start))
+
+get_channel_admins(table_start=table_start)
 
 print("Completed. Check the 'channel_contacts.xlsx' file.")
