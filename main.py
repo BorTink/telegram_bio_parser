@@ -30,6 +30,8 @@ table_cur = table_start
 file_path = 'result.csv'
 file_exists = os.path.isfile(file_path)
 
+time.sleep(3600 * 2)
+
 
 def write_to_result_csv(data_to_append):
     with open(file_path, 'a', newline='') as csvfile:
@@ -171,7 +173,7 @@ def get_channel_admins(table_start):
             write_to_result_csv(channel_info_list)
             channel_info_list = []
             print('SLEEPING FOR 4 HOURS FOR COOLDOWN')
-            time.sleep(3600 * 4)  # program stops for 4 hours for cooldown
+            time.sleep(3600 * 6)  # program stops for 4 hours for cooldown
 
         time.sleep(0.1)
 
