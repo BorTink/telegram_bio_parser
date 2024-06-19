@@ -30,9 +30,6 @@ table_cur = table_start
 file_path = 'result.csv'
 file_exists = os.path.isfile(file_path)
 
-time.sleep(3600 * 2)
-
-
 def write_to_result_csv(data_to_append):
     with open(file_path, 'a', newline='') as csvfile:
         fieldnames = ['Channel Link', 'Channel Name', 'Usernames']
